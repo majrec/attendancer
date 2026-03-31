@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from "react";
 
 const STATUS_OPTIONS = [
-  { value: "on-site", label: "On-site 🚗", background: "#dbeafe", border: "#93c5fd" },
+  { value: "on-site", label: "On-site", background: "#dbeafe", border: "#93c5fd" },
   
   { value: "home-office", label: "Home office", background: "#fce7f3", border: "#f9a8d4" },
   { value: "telework", label: "Telework", background: "#dcfce7", border: "#86efac" },
@@ -98,6 +98,21 @@ const styles = {
     flexWrap: "wrap",
     gap: "10px",
     alignItems: "center",
+    justifyContent: "space-between",
+  },
+  controlsLeft: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+    alignItems: "center",
+  },
+  controlsRight: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    marginLeft: "auto",
   },
   navButton: {
     border: "1px solid #cbd5e1",
@@ -112,6 +127,16 @@ const styles = {
     border: "1px solid #93c5fd",
     background: "#eff6ff",
     color: "#1e3a8a",
+    borderRadius: "12px",
+    padding: "10px 14px",
+    cursor: "pointer",
+    fontSize: "14px",
+    fontWeight: 600,
+  },
+  resetButton: {
+    border: "1px solid #fecaca",
+    background: "#fef2f2",
+    color: "#991b1b",
     borderRadius: "12px",
     padding: "10px 14px",
     cursor: "pointer",
@@ -156,11 +181,18 @@ const styles = {
     background: "#f8fafc",
   },
   dayCell: {
+    position: "relative",
     minHeight: "96px",
     borderRadius: "14px",
     border: "1px solid #e2e8f0",
     padding: "8px",
     boxSizing: "border-box",
+  },
+  onSiteIcon: {
+    position: "absolute",
+    top: "6px",
+    right: "6px",
+    fontSize: "22px",
   },
   dayHead: {
     marginBottom: "8px",
@@ -337,6 +369,7 @@ function MonthCalendar({
   selections,
   onChange,
   onFillMonthOnSite,
+  onResetMonth,
   onPreviousMonth,
   onNextMonth,
 }) {
@@ -361,24 +394,31 @@ function MonthCalendar({
             Next →
           </button>
         </div>
-
         <div style={styles.controlsRow}>
-          <button type="button" style={styles.fillButton} onClick={() => onFillMonthOnSite(monthDate)}>
-            Fill free days with On-site
-          </button>
+          <div style={styles.controlsLeft}>
+            <button type="button" style={styles.resetButton} onClick={() => onResetMonth(monthDate)}>
+              Reset month
+            </button>
 
-          <div style={styles.statPillGreen}>
-            <span style={{ color: "#475569" }}>Telework remaining: </span>
-            <strong>
-              {teleworkRemaining} / {MONTH_LIMITS.telework}
-            </strong>
+            <button type="button" style={styles.fillButton} onClick={() => onFillMonthOnSite(monthDate)}>
+              Fill free days with On-site
+            </button>
           </div>
 
-          <div style={styles.statPillPink}>
-            <span style={{ color: "#475569" }}>Home office remaining: </span>
-            <strong>
-              {homeOfficeRemaining} / {MONTH_LIMITS["home-office"]}
-            </strong>
+          <div style={styles.controlsRight}>
+            <div style={styles.statPillGreen}>
+              <span style={{ color: "#475569" }}>Telework remaining: </span>
+              <strong>
+                {teleworkRemaining} / {MONTH_LIMITS.telework}
+              </strong>
+            </div>
+
+            <div style={styles.statPillPink}>
+              <span style={{ color: "#475569" }}>Home office remaining: </span>
+              <strong>
+                {homeOfficeRemaining} / {MONTH_LIMITS["home-office"]}
+              </strong>
+            </div>
           </div>
         </div>
       </div>
@@ -413,6 +453,9 @@ function MonthCalendar({
                 <div style={styles.dayHead}>
                   <span style={styles.dayNumber}>{date.getDate()}</span>
                   {isHoliday && <span style={styles.holidayBadge}>Holiday</span>}
+                  {selectedOption?.value === "on-site" && (
+                    <span style={styles.onSiteIcon}>🚗</span>
+                  )}
                 </div>
 
                 {!isNonWorkingDay && (
@@ -502,6 +545,23 @@ export default function DochadzkaKalendarApp() {
     });
   };
 
+  const handleResetMonth = (monthDate) => {
+    setSelections((prev) => {
+      const updated = { ...prev };
+      const year = monthDate.getFullYear();
+      const month = monthDate.getMonth();
+
+      Object.keys(updated).forEach((dateKey) => {
+        const date = new Date(`${dateKey}T00:00:00`);
+        if (date.getFullYear() === year && date.getMonth() === month) {
+          delete updated[dateKey];
+        }
+      });
+
+      return updated;
+    });
+  };
+
   return (
     <div style={styles.page}>
       <div style={styles.container}>
@@ -522,6 +582,7 @@ export default function DochadzkaKalendarApp() {
           selections={selections}
           onChange={handleSelectionChange}
           onFillMonthOnSite={handleFillMonthOnSite}
+          onResetMonth={handleResetMonth}
           onPreviousMonth={() => handleMonthShift(-1)}
           onNextMonth={() => handleMonthShift(1)}
         />
